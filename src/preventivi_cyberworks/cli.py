@@ -4,7 +4,7 @@ from pathlib import Path
 import click
 from reportlab.pdfgen import canvas
 
-from .storage import add_preventivo, list_preventivi
+from preventivi_cyberworks.storage import add_preventivo, list_preventivi
 
 
 @click.group()
@@ -36,7 +36,6 @@ def genera(ctx, cliente, dest):
     if verbose:
         click.echo(f"[DEBUG] Inizio generazione PDF per: {cliente}")
 
-
     c = canvas.Canvas(dest)
     c.setFont("Helvetica-Bold", 16)
     c.drawString(72, 750, f"Preventivo per {cliente}")
@@ -65,7 +64,7 @@ def genera(ctx, cliente, dest):
     "--data", prompt="Data (YYYY-MM-DD)", default=date.today().isoformat()
 )
 def importa(file, cliente, data):
-    """Importa un PDF esistente nell’archivio."""
+    """Importa un PDF esistente nell'archivio."""
     add_preventivo(
         {"cliente": cliente, "data": data, "file": str(Path(file).resolve())}
     )
