@@ -18,11 +18,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # ReportLab necessita di alcune librerie di sistema per compilare i font
+      - name: Install system dependencies (freetype, jpeg)
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libfreetype6-dev libjpeg-dev build-essential
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
+          cache: pip
 
       - name: Install dependencies
         run: |
@@ -35,3 +41,4 @@ jobs:
         run: |
           source venv/bin/activate
           pytest --maxfail=1 --disable-warnings -q
+
