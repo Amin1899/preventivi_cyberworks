@@ -1,12 +1,23 @@
 import sys
+import click
 
-def main():
+def configure_logging(verbose: bool):
+    """
+    Configura la log verbosity.
+    """
+    # TODO: implementare logging avanzato in futuro
+    if verbose:
+        click.echo("[DEBUG] Verbose mode attivo.")
+
+@click.command()
+@click.option("-v", "--verbose", is_flag=True, help="Abilita output dettagliato (verbose)")
+def main(verbose: bool):
     """
     Punto di ingresso dell'applicazione Preventivi Cyberworks.
-    Attualmente stampa un messaggio di benvenuto.
+    --verbose: attiva il logging dettagliato
     """
-    print("Preventivi Cyberworks avviato.")
-
+    configure_logging(verbose)
+    click.echo("Preventivi Cyberworks avviato.")
 
 if __name__ == "__main__":
     main()
