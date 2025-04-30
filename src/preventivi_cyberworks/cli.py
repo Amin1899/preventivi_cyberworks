@@ -4,7 +4,7 @@ from pathlib import Path
 import click
 from reportlab.pdfgen import canvas
 
-from preventivi_cyberworks.storage import add_preventivo, list_preventivi
+from preventivi_cyberworks.storage import add_preventivo, list_preventivi, get_by_index
 
 
 @click.group()
@@ -87,3 +87,26 @@ def lista(cliente):
     click.echo("-" * 60)
     for idx, rec in enumerate(rows, 1):
         click.echo(f"{idx:<3} {rec['data']:<10} {rec['cliente']:<20} {rec['file']}")
+# ------------------------------------------------------------------
+# COMANDO: CONFRONTA
+# ------------------------------------------------------------------
+@cli.command()
+@click.argument("id1", type=int)
+@click.argument("id2", type=int)
+def confronta(id1, id2):
+    """Confronta due preventivi per indice (come mostrato in `lista`)."""
+    p1 = get_by_index(id1)
+    p2 = get_by_index(id2)
+
+    if not p1 or not p2:
+        click.echo("Indici non validi.")
+        return
+
+    click.echo(f"Confronto ID {id1} vs ID {id2}")
+    click.echo("-" * 40)
+
+    keys = ["cliente", "data", "file"]
+    for k in keys:
+        v1, v2 = p1[k], p2[k]
+        status = "✓" if v1 == v2 else "≠"
+        click.echo(f"{k:<8}: {v1}  {status}  {v2}")

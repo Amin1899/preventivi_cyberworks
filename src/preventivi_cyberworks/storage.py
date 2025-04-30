@@ -53,3 +53,11 @@ def list_preventivi(cliente: str | None = None) -> List[dict]:
         items = [p for p in items if p["cliente"].lower() == cliente.lower()]
     # ordina per data (stringa ISO YYYY-MM-DD)
     return sorted(items, key=lambda p: p["data"])
+# ------------------------------------------------------------------
+# Utilità per recuperare un record per indice (1-based, come mostrato da `lista`)
+# ------------------------------------------------------------------
+def get_by_index(idx: int) -> dict | None:
+    items = list_preventivi()
+    if 1 <= idx <= len(items):
+        return items[idx - 1]
+    return None
