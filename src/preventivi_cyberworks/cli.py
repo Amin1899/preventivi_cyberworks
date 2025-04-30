@@ -5,7 +5,8 @@ import click
 from reportlab.pdfgen import canvas
 
 from preventivi_cyberworks.storage import add_preventivo, list_preventivi, get_by_index
-from .pdf_utils import parse_preventivo_pdf
+from preventivi_cyberworks.pdf_utils import parse_preventivo_pdf
+
 
 @click.group()
 @click.option("--verbose", is_flag=True, help="Modalità verbosa.")
@@ -49,6 +50,7 @@ def genera(ctx, cliente, dest):
             "cliente": cliente,
             "data": date.today().isoformat(),
             "file": str(Path(dest).resolve()),
+            "totale": "0,00",
         }
     )
     click.echo(f"Preventivo per '{cliente}' salvato in '{dest}'")
@@ -91,10 +93,14 @@ def lista(cliente):
         click.echo("Nessun preventivo trovato.")
         return
 
-    click.echo(f"{'ID':<3} {'Data':<10} {'Cliente':<20} File")
-    click.echo("-" * 60)
+    click.echo(f"{'ID':<3} {'Data':<10} {'Cliente':<20} {'Totale':<10} File")
+    click.echo("-" * 70)
     for idx, rec in enumerate(rows, 1):
-        click.echo(f"{idx:<3} {rec['data']:<10} {rec['cliente']:<20} {rec['file']}")
+        click.echo(
+            f"{idx:<3} {rec['data']:<10} {rec['cliente']:<20} {rec.get('totale',''):<10} {rec['file']}"
+        )
+
+
 # ------------------------------------------------------------------
 # COMANDO: CONFRONTA
 # ------------------------------------------------------------------
@@ -113,8 +119,9 @@ def confronta(id1, id2):
     click.echo(f"Confronto ID {id1} vs ID {id2}")
     click.echo("-" * 40)
 
-    keys = ["cliente", "data", "file"]
+    keys = ["cliente", "data", "totale", "file"]
     for k in keys:
-        v1, v2 = p1[k], p2[k]
+        v1, v2 = p1.get(k,''), p2.get(k,'')
         status = "✓" if v1 == v2 else "≠"
         click.echo(f"{k:<8}: {v1}  {status}  {v2}")
+
