@@ -5,7 +5,7 @@ import click
 from reportlab.pdfgen import canvas
 
 from preventivi_cyberworks.storage import add_preventivo, list_preventivi, get_by_index
-
+from .pdf_utils import parse_preventivo_pdf
 
 @click.group()
 @click.option("--verbose", is_flag=True, help="Modalità verbosa.")
@@ -59,16 +59,24 @@ def genera(ctx, cliente, dest):
 # ------------------------------------------------------------------
 @cli.command()
 @click.argument("file", type=click.Path(exists=True, dir_okay=False))
-@click.option("--cliente", prompt="Cliente", help="Nome cliente")
-@click.option(
-    "--data", prompt="Data (YYYY-MM-DD)", default=date.today().isoformat()
-)
-def importa(file, cliente, data):
-    """Importa un PDF esistente nell'archivio."""
+def importa(file):
+    """
+    Importa un PDF esistente nell’archivio,
+    estraendo automaticamente cliente, data, totale.
+    """
+    meta = parse_preventivo_pdf(file)
     add_preventivo(
-        {"cliente": cliente, "data": data, "file": str(Path(file).resolve())}
+        {
+            "cliente": meta["cliente"],
+            "data": meta["data"],
+            "file": str(Path(file).resolve()),
+            "totale": meta["totale"],
+        }
     )
-    click.echo(f"Importato '{file}' per il cliente '{cliente}'.")
+    click.echo(
+        f"Importato '{file}': cliente={meta['cliente']}, "
+        f"data={meta['data']}, totale=€ {meta['totale']}"
+    )
 
 
 # ------------------------------------------------------------------
