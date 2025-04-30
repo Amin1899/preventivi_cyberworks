@@ -13,6 +13,7 @@ setup(
         "reportlab==4.4.0",
         "pytest==8.3.5",
         "pdfminer.six>=20221105",
+        "rich>=13.4.1",
     ],
     entry_points={
         "console_scripts": [
