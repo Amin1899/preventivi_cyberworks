@@ -6,13 +6,13 @@ setup(
     description="CLI per generare e gestire preventivi in PDF",
     author="Amin",
     python_requires=">=3.10",
-    # IMPORTANTE: src-layout
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     install_requires=[
         "click==8.1.8",
         "reportlab==4.4.0",
         "pytest==8.3.5",
+        "pdfminer.six>=20221105",
     ],
     entry_points={
         "console_scripts": [
