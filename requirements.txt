@@ -1,0 +1,3 @@
+# requirements per Preventivi Cyberworks
+# Aggiungi qui le dipendenze, poi esegui:
+#   pip install -r requirements.txt
