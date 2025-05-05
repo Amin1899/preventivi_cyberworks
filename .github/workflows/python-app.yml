@@ -23,7 +23,11 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install -y libfreetype6-dev libjpeg-dev build-essential
-
+      - name: Install WeasyPrint system deps
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libcairo2 libpango-1.0-0 libpangocairo-1.0-0 \
+            libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
