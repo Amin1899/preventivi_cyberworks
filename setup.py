@@ -14,6 +14,8 @@ setup(
         "pytest==8.3.5",
         "pdfminer.six>=20221105",
         "rich>=13.4.1",
+        "Jinja2>=3.1.3",
+        "WeasyPrint>=62.0",
     ],
     entry_points={
         "console_scripts": [
