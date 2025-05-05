@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="preventivi-cyberworks",
-    version="0.1.0",
+    version="0.1.2",
     description="CLI per generare e gestire preventivi in PDF",
     author="Amin",
     python_requires=">=3.10",
