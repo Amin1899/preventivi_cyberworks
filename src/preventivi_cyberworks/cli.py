@@ -4,7 +4,7 @@ from pathlib import Path
 from reportlab.pdfgen import canvas
 from preventivi_cyberworks.storage import add_preventivo, list_preventivi, get_by_index
 from preventivi_cyberworks.pdf_utils import parse_preventivo_pdf
-
+from preventivi_cyberworks.templating import render_pdf
 from rich.console import Console
 from rich.table import Table
 
@@ -26,39 +26,33 @@ def cli(ctx, verbose):
 # ------------------------------------------------------------------
 @cli.command()
 @click.argument("cliente")
-@click.option(
-    "-d",
-    "--dest",
-    type=click.Path(dir_okay=False),
-    default="output.pdf",
-    help="File di destinazione PDF.",
-)
+@click.option("-d", "--dest", default="output.pdf", help="File PDF di destinazione")
+@click.option("--totale", default="0,00", help="Totale preventivo")
+@click.option("--brand", default="default", help="Tema colore / logo")
 @click.pass_context
-def genera(ctx, cliente, dest):
-    """Genera un preventivo PDF fittizio per CLIENTE."""
+def genera(ctx, cliente, dest, totale, brand):
+    """Genera un preventivo PDF con template HTML/CSS."""
     verbose = ctx.obj["verbose"]
     if verbose:
-        click.echo(f"[DEBUG] Inizio generazione PDF per: {cliente}")
+        console.print(f"[DEBUG] Inizio generazione PDF per: {cliente}")
 
-    data_oggi = date.today()
-    
-    c = canvas.Canvas(dest)
-    c.setFont("Helvetica-Bold", 16)
-    c.drawString(72, 750, f"Preventivo per {cliente}")
-    c.setFont("Helvetica", 12)
-    c.drawString(72, 720, f"Data: {data_oggi.isoformat()}")
-    c.drawString(72, 700, "Totale: € 0,00 (demo)")
-    c.save()
+    context = {
+        "cliente": cliente,
+        "data": date.today().isoformat(),
+        "totale": totale,
+    }
+    render_pdf(dest, context, brand=brand)
 
     add_preventivo(
         {
             "cliente": cliente,
-            "data": data_oggi.isoformat(),
+            "data": context["data"],
             "file": str(Path(dest).resolve()),
-            "totale": "0,00",
+            "totale": totale,
         }
     )
-    click.echo(f"Preventivo per '{cliente}' salvato in '{dest}'")
+    console.print(f"Preventivo per '{cliente}' salvato in '{dest}'")
+
 
 
 # ------------------------------------------------------------------
