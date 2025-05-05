@@ -33,17 +33,26 @@ def load_brand(name: str = "default") -> dict:
     brand["logo"] = str((BRAND_DIR / name / logo_name).resolve())
     return brand
 
-def create_simple_pdf(output_path: str, context: dict):
-    """Crea un PDF semplice usando ReportLab come fallback quando WeasyPrint non è disponibile."""
-    c = canvas.Canvas(output_path, pagesize=A4)
+def create_simple_pdf(output_path, context: dict):
+    """
+    Crea un PDF minimale con ReportLab.
+    Accetta Path o stringa come output_path.
+    """
+    # 🔧 1) normalizza a stringa
+    output_path = str(output_path)
+
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import A4
     width, height = A4
-    
-    # Aggiungi contenuto base
+
+    # Se la cartella non esiste la creiamo (utile in /tmp di pytest)
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+
+    c = canvas.Canvas(output_path, pagesize=A4)
     c.setFont("Helvetica", 12)
     c.drawString(50, height - 50, f"Cliente: {context.get('cliente', 'N/A')}")
     c.drawString(50, height - 70, f"Data: {context.get('data', 'N/A')}")
     c.drawString(50, height - 90, f"Totale: € {context.get('totale', '0,00')}")
-    
     c.save()
 
 def render_pdf(
