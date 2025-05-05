@@ -1,11 +1,14 @@
+import click
 from datetime import date
 from pathlib import Path
-
-import click
 from reportlab.pdfgen import canvas
-
 from preventivi_cyberworks.storage import add_preventivo, list_preventivi, get_by_index
 from preventivi_cyberworks.pdf_utils import parse_preventivo_pdf
+
+from rich.console import Console
+from rich.table import Table
+
+console = Console()
 
 
 @click.group()
@@ -37,18 +40,20 @@ def genera(ctx, cliente, dest):
     if verbose:
         click.echo(f"[DEBUG] Inizio generazione PDF per: {cliente}")
 
+    data_oggi = date.today()
+    
     c = canvas.Canvas(dest)
     c.setFont("Helvetica-Bold", 16)
     c.drawString(72, 750, f"Preventivo per {cliente}")
     c.setFont("Helvetica", 12)
-    c.drawString(72, 720, f"Data: {date.today().isoformat()}")
+    c.drawString(72, 720, f"Data: {data_oggi.isoformat()}")
     c.drawString(72, 700, "Totale: € 0,00 (demo)")
     c.save()
 
     add_preventivo(
         {
             "cliente": cliente,
-            "data": date.today().isoformat(),
+            "data": data_oggi.isoformat(),
             "file": str(Path(dest).resolve()),
             "totale": "0,00",
         }
@@ -63,7 +68,7 @@ def genera(ctx, cliente, dest):
 @click.argument("file", type=click.Path(exists=True, dir_okay=False))
 def importa(file):
     """
-    Importa un PDF esistente nell’archivio,
+    Importa un PDF esistente nell'archivio,
     estraendo automaticamente cliente, data, totale.
     """
     meta = parse_preventivo_pdf(file)
@@ -90,15 +95,25 @@ def lista(cliente):
     """Elenca i preventivi archiviati."""
     rows = list_preventivi(cliente)
     if not rows:
-        click.echo("Nessun preventivo trovato.")
+        console.print("[yellow]Nessun preventivo trovato.[/]")
         return
 
-    click.echo(f"{'ID':<3} {'Data':<10} {'Cliente':<20} {'Totale':<10} File")
-    click.echo("-" * 70)
+    table = Table(title="Elenco preventivi", show_lines=True)
+    table.add_column("ID", style="cyan", no_wrap=True)
+    table.add_column("Data", style="magenta")
+    table.add_column("Cliente", style="green")
+    table.add_column("File", style="white")
+    table.add_column("Totale", justify="right", style="red")
+
     for idx, rec in enumerate(rows, 1):
-        click.echo(
-            f"{idx:<3} {rec['data']:<10} {rec['cliente']:<20} {rec.get('totale',''):<10} {rec['file']}"
+        table.add_row(
+            str(idx),
+            rec["data"],
+            rec["cliente"],
+            rec["file"],
+            rec.get("totale", ""),
         )
+    console.print(table)
 
 
 # ------------------------------------------------------------------
@@ -113,15 +128,19 @@ def confronta(id1, id2):
     p2 = get_by_index(id2)
 
     if not p1 or not p2:
-        click.echo("Indici non validi.")
+        console.print("[red]Indici non validi.[/]")
         return
 
-    click.echo(f"Confronto ID {id1} vs ID {id2}")
-    click.echo("-" * 40)
+    console.print(f"[bold underline]Confronto ID {id1} vs ID {id2}[/]\n")
+    table = Table(show_header=True)
+    table.add_column("Campo", style="cyan")
+    table.add_column(f"ID {id1}", style="green")
+    table.add_column(f"ID {id2}", style="green")
 
-    keys = ["cliente", "data", "totale", "file"]
-    for k in keys:
-        v1, v2 = p1.get(k,''), p2.get(k,'')
-        status = "✓" if v1 == v2 else "≠"
-        click.echo(f"{k:<8}: {v1}  {status}  {v2}")
+    for k in ["cliente", "data", "file", "totale"]:
+        v1 = p1.get(k, "")
+        v2 = p2.get(k, "")
+        mark = "✓" if v1 == v2 else "[red]≠[/]"
+        table.add_row(k, v1, v2 + f" {mark}")
 
+    console.print(table)
