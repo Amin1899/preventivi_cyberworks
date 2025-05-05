@@ -56,16 +56,16 @@ def render_pdf(
     Renderizza un PDF da un template HTML Jinja2 usando WeasyPrint.
     Se WeasyPrint non è disponibile o fallisce, ricorre a ReportLab.
     """
-    # 1) Validazione e preparazione del percorso di output
+    # 1) Controlla che ci sia un percorso di output
     if output_path is None:
         raise ValueError("render_pdf: serve un percorso di output")
     output_path = Path(output_path)
+    # crea le directory padre se non esistono
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_str = str(output_path)
 
-    # 2) Import dinamico di WeasyPrint
+    # 2) Import dinamico di WeasyPrint (silenzia stdout)
     try:
-        # Silenzia gli eventuali log di stdout
         old_stdout = sys.stdout
         sys.stdout = StringIO()
         from weasyprint import HTML
@@ -76,11 +76,11 @@ def render_pdf(
             sys.stdout = old_stdout
         use_weasy = False
 
-    # 3) Contesto finale per il template
+    # 3) Prepara il contesto
     merged = {} if context is None else context.copy()
     merged.update(extra_context)
 
-    # 4) Se WeasyPrint disponibile, prova a usarlo
+    # 4) Se WeasyPrint c’è, prova a generare
     if use_weasy:
         try:
             template = env.get_template(template_name)
@@ -88,9 +88,9 @@ def render_pdf(
             HTML(string=html_str).write_pdf(output_str)
             return
         except Exception:
-            # su qualunque errore, fallback ReportLab
+            # fallback su ReportLab se qualcosa va storto
             create_simple_pdf(output_str, merged)
             return
 
-    # 5) Se WeasyPrint non c’è, ReportLab fallback
+    # 5) Se non c’è WeasyPrint, usa ReportLab
     create_simple_pdf(output_str, merged)
