@@ -8,6 +8,15 @@ setup(
     python_requires=">=3.10",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
+    include_package_data=True,
+    package_data={
+        "preventivi_cyberworks": [
+            "templates/*.html",
+            "templates/*.css",
+            "branding/*/*.json",
+            "branding/*/*.png",
+        ],
+    },
     install_requires=[
         "click==8.1.8",
         "reportlab==4.4.0",

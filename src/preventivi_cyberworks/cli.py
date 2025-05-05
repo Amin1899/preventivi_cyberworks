@@ -42,7 +42,8 @@ def genera(ctx, cliente, dest, totale, brand):
         "totale": totale,
     }
     try:
-        render_pdf("preventivo.html", context, dest, brand=brand)
+        dest_path = str(Path(dest).resolve())
+        render_pdf("preventivo.html", context, dest_path, brand=brand)
         click.echo(f"Preventivo per '{cliente}' salvato in '{dest}'")
     except Exception as e:
         if verbose:
