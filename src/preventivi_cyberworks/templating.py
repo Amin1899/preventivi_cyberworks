@@ -3,14 +3,9 @@ import sys
 import json
 from io import StringIO
 from pathlib import Path
-from datetime import datetime
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
-from reportlab.lib.units import cm
 
 # Percorsi base
 PKG_DIR      = Path(__file__).resolve().parent               # .../preventivi_cyberworks
@@ -35,81 +30,16 @@ def load_brand(name: str = "default") -> dict:
     return brand
 
 def create_simple_pdf(output_path: str | Path, context: dict):
-    """Crea un PDF professionale usando ReportLab come fallback."""
+    """Fallback ReportLab."""
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    # Carica il brand
-    brand = load_brand(context.get('brand', 'default'))
-    primary_color = colors.HexColor(brand.get('primary', '#000000'))
-    
-    # Crea il documento
-    doc = SimpleDocTemplate(
-        str(output_path),
-        pagesize=A4,
-        rightMargin=2*cm,
-        leftMargin=2*cm,
-        topMargin=2*cm,
-        bottomMargin=2*cm
-    )
-    
-    # Stili
-    styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle(
-        name='CustomTitle',
-        parent=styles['Heading1'],
-        textColor=primary_color,
-        spaceAfter=30
-    ))
-    
-    # Elementi del documento
-    elements = []
-    
-    # Logo
-    if 'logo' in brand:
-        img = Image(brand['logo'], width=200, height=100)
-        elements.append(img)
-        elements.append(Spacer(1, 20))
-    
-    # Titolo
-    elements.append(Paragraph("PREVENTIVO", styles['CustomTitle']))
-    
-    # Dati cliente
-    data = [
-        ["Cliente:", context.get('cliente', 'N/A')],
-        ["Data:", context.get('data', datetime.now().strftime('%d/%m/%Y'))],
-        ["Totale:", f"€ {context.get('totale', '0,00')}"]
-    ]
-    
-    # Crea tabella
-    table = Table(data, colWidths=[100, 300])
-    table.setStyle(TableStyle([
-        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-        ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
-        ('ALIGN', (1, 0), (1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-        ('TOPPADDING', (0, 0), (-1, -1), 12),
-    ]))
-    
-    elements.append(table)
-    elements.append(Spacer(1, 30))
-    
-    # Footer
-    elements.append(Paragraph(
-        "Documento generato automaticamente",
-        ParagraphStyle(
-            'Footer',
-            parent=styles['Normal'],
-            textColor=colors.gray,
-            alignment=1,
-            fontSize=8
-        )
-    ))
-    
-    # Genera il PDF
-    doc.build(elements)
+    c = canvas.Canvas(str(output_path), pagesize=A4)
+    width, height = A4
+    c.setFont("Helvetica", 12)
+    c.drawString(50, height - 50, f"Cliente: {context.get('cliente', 'N/A')}")
+    c.drawString(50, height - 70, f"Data: {context.get('data', 'N/A')}")
+    c.drawString(50, height - 90, f"Totale: € {context.get('totale', '0,00')}")
+    c.save()
 
 def render_pdf(
     template_name: str,
