@@ -5,18 +5,16 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from reportlab.lib.pagesizes import A4
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 
-# ------------------------------------------------------------
-# Percorsi base (all'interno del package)
-# ------------------------------------------------------------
-PKG_DIR      = Path(__file__).resolve().parent
-TEMPLATE_DIR = PKG_DIR / "templates"
-BRAND_DIR    = PKG_DIR / "branding"
+# -------------------------------------------------------------------
+# Percorsi base all'interno del package
+# -------------------------------------------------------------------
+PKG_DIR      = Path(__file__).resolve().parent           # .../src/preventivi_cyberworks
+TEMPLATE_DIR = PKG_DIR / "templates"                     # .../src/preventivi_cyberworks/templates
+BRAND_DIR    = PKG_DIR / "branding"                      # .../src/preventivi_cyberworks/branding
 
-# Jinja2 environment
+# Configurazione Jinja2
 env = Environment(
     loader=FileSystemLoader(str(TEMPLATE_DIR)),
     autoescape=select_autoescape(["html", "xml"]),
@@ -32,19 +30,16 @@ def load_brand(name: str = "default") -> dict:
         raise FileNotFoundError(f"Brand '{name}' non trovato in {brand_path}")
     with brand_path.open(encoding="utf-8") as f:
         brand = json.load(f)
-    # Risolvi il percorso del logo in assoluto
     logo_name = Path(brand.get("logo", "")).name
     brand["logo"] = str((BRAND_DIR / name / logo_name).resolve())
     return brand
 
 def create_simple_pdf(output_path: str, context: dict):
     """
-    Fallback minimal usando ReportLab: disegna cliente, data e totale su A4.
+    Fallback mininimo con ReportLab: disegna Cliente, Data, Totale su A4.
     """
     c = canvas.Canvas(output_path, pagesize=A4)
     width, height = A4
-
-    # (eventualmente registrare font custom con pdfmetrics.registerFont)
     c.setFont("Helvetica", 12)
     c.drawString(50, height - 50, f"Cliente: {context.get('cliente', 'N/A')}")
     c.drawString(50, height - 70, f"Data: {context.get('data', 'N/A')}")
@@ -58,19 +53,19 @@ def render_pdf(
     **extra_context
 ):
     """
-    Renderizza un PDF da un template Jinja2+HTML con WeasyPrint.
-    Se WeasyPrint non è disponibile o fallisce, cade su ReportLab.
+    Renderizza un PDF da un template HTML Jinja2 usando WeasyPrint.
+    Se WeasyPrint non è disponibile o fallisce, ricorre a ReportLab.
     """
-    # --- Prepara il percorso di output (Path + creazione dirs):
+    # 1) Validazione e preparazione del percorso di output
     if output_path is None:
         raise ValueError("render_pdf: serve un percorso di output")
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_str = str(output_path)
 
-    # --- Import dinamico di WeasyPrint (evita errori a import-time)
+    # 2) Import dinamico di WeasyPrint
     try:
-        # Sopprimi eventuale stdout di WeasyPrint
+        # Silenzia gli eventuali log di stdout
         old_stdout = sys.stdout
         sys.stdout = StringIO()
         from weasyprint import HTML
@@ -81,22 +76,21 @@ def render_pdf(
             sys.stdout = old_stdout
         use_weasy = False
 
-    # Prepara il context combinato
+    # 3) Contesto finale per il template
     merged = {} if context is None else context.copy()
     merged.update(extra_context)
 
+    # 4) Se WeasyPrint disponibile, prova a usarlo
     if use_weasy:
         try:
-            # Render HTML via Jinja2
             template = env.get_template(template_name)
             html_str = template.render(**merged)
-            # Scrivi PDF
             HTML(string=html_str).write_pdf(output_str)
             return
         except Exception:
-            # Qualunque errore, fallback ReportLab
+            # su qualunque errore, fallback ReportLab
             create_simple_pdf(output_str, merged)
             return
 
-    # Se non uso WeasyPrint, fallback ReportLab
+    # 5) Se WeasyPrint non c’è, ReportLab fallback
     create_simple_pdf(output_str, merged)
