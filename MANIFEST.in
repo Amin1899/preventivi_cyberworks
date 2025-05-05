@@ -1,2 +1,4 @@
-graft src/preventivi_cyberworks/templates
-graft src/preventivi_cyberworks/branding
+include src/preventivi_cyberworks/templates/*.html
+include src/preventivi_cyberworks/templates/*.css
+include src/preventivi_cyberworks/branding/*/*.json
+include src/preventivi_cyberworks/branding/*/*.png
